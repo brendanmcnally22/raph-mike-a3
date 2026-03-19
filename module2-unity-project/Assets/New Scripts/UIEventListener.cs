@@ -8,13 +8,13 @@ public class UIEventListener : MonoBehaviour, IEventListener
     public void Subscribe()
     {
         SkeletonAI.OnSkeletonRoar += OnRoar;
-        Chest.OnChestOpened += OnChestOpened;
+        Chest.OnChestLooted += OnChestOpened;
     }
 
     public void Unsubscribe()
     {
         SkeletonAI.OnSkeletonRoar -= OnRoar;
-        Chest.OnChestOpened -= OnChestOpened;
+        Chest.OnChestLooted -= OnChestOpened;
     }
 
     void OnRoar(Vector3 pos)
@@ -22,8 +22,8 @@ public class UIEventListener : MonoBehaviour, IEventListener
         Debug.Log(" Enemies alerted!");
     }
 
-    void OnChestOpened()
+    void OnChestOpened(int goldAmount)
     {
-        Debug.Log("Chest opened!");
+        Debug.Log("Chest opened! Gold gained: " + goldAmount);
     }
 }

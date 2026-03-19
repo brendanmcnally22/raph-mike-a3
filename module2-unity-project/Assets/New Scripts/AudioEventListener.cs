@@ -12,13 +12,13 @@ public class AudioEventListener : MonoBehaviour, IEventListener
     public void Subscribe()
     {
         SkeletonAI.OnSkeletonRoar += PlayRoarSound;
-        Chest.OnChestOpened += PlayChestSound;
+        Chest.OnChestLooted += PlayChestSound;
     }
 
     public void Unsubscribe()
     {
         SkeletonAI.OnSkeletonRoar -= PlayRoarSound;
-        Chest.OnChestOpened -= PlayChestSound;
+        Chest.OnChestLooted -= PlayChestSound;
     }
 
     void PlayRoarSound(Vector3 pos)
@@ -27,7 +27,7 @@ public class AudioEventListener : MonoBehaviour, IEventListener
         audioSource.PlayOneShot(roarClip);
     }
 
-    void PlayChestSound()
+    void PlayChestSound(int goldAmount)
     {
         audioSource.PlayOneShot(chestClip);
     }

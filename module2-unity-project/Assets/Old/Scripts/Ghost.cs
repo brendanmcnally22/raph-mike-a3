@@ -1,77 +1,82 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-public class GhostAI : MonoBehaviour, IEventListener
+public class GhostAI : MonoBehaviour
 {
-    public enum State { Drift, Investigate, Haunt }
-    public State currentState;
-
     public Transform player;
-    public float detectRadius = 6f;
-    public float speed = 2f;
+    public float speed = 3f;
+    public float hauntDuration = 5f;
 
-    Vector3 targetPosition;
-    float memoryTimer;
+    bool haunting = false;
+    float hauntTimer;
 
-    void OnEnable() => Subscribe();
-    void OnDisable() => Unsubscribe();
+    Renderer rend;
 
-    public void Subscribe()
+    void Start()
     {
-        SkeletonAI.OnSkeletonRoar += OnRoarHeard;
+        rend = GetComponent<Renderer>();
     }
 
-    public void Unsubscribe()
+    void OnEnable()
     {
-        SkeletonAI.OnSkeletonRoar -= OnRoarHeard;
+        SkeletonAI.OnSkeletonRoar += ReactToRoar;
+    }
+
+    void OnDisable()
+    {
+        SkeletonAI.OnSkeletonRoar -= ReactToRoar;
     }
 
     void Update()
     {
-        float dist = Vector3.Distance(transform.position, player.position);
-
-        switch (currentState)
+        if (haunting && player != null)
         {
-            case State.Drift:
-                Wander();
-                if (dist < detectRadius)
-                    ChangeState(State.Investigate);
-                break;
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                player.position,
+                speed * Time.deltaTime
+            );
 
-            case State.Investigate:
-                transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
-
-                if (dist < 2f)
-                    ChangeState(State.Haunt);
-
-                memoryTimer = 4f;
-                break;
-
-            case State.Haunt:
-                transform.position = Vector3.MoveTowards(transform.position, player.position, speed * 1.5f * Time.deltaTime);
-
-                if (dist > detectRadius)
-                {
-                    memoryTimer -= Time.deltaTime;
-                    if (memoryTimer <= 0)
-                        ChangeState(State.Drift);
-                }
-                break;
+            hauntTimer -= Time.deltaTime;
+            if (hauntTimer <= 0)
+            {
+                StopHaunting();
+            }
         }
     }
 
-    void Wander()
+    void ReactToRoar(Vector3 pos)
     {
-        transform.position += new Vector3(Mathf.Sin(Time.time), 0, Mathf.Cos(Time.time)) * 0.5f * Time.deltaTime;
+        float dist = Vector3.Distance(transform.position, pos);
+
+        // 🔥 BIGGER THAN PLAYER DETECTION
+        if (dist < 15f)
+        {
+            haunting = true;
+            hauntTimer = hauntDuration;
+
+            if (rend != null)
+                rend.material.EnableKeyword("_EMISSION");
+
+            GraveyardEvents.OnHauntStart?.Invoke();
+        }
     }
 
-    void OnRoarHeard(Vector3 source)
+    void StopHaunting()
     {
-        targetPosition = source;
-        ChangeState(State.Investigate);
+        haunting = false;
+
+        if (rend != null)
+            rend.material.DisableKeyword("_EMISSION");
+
+        GraveyardEvents.OnHauntEnd?.Invoke();
     }
 
-    void ChangeState(State newState)
+    void OnTriggerEnter(Collider other)
     {
-        currentState = newState;
+        IHittable hit = other.GetComponent<IHittable>();
+        if (hit != null)
+        {
+            hit.Hit(gameObject);
+        }
     }
 }

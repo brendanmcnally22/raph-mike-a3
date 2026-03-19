@@ -1,67 +1,91 @@
 ﻿using UnityEngine;
 using System;
 
-public class SkeletonAI : MonoBehaviour, IInteractable
+public class SkeletonAI : MonoBehaviour, IInteractable, IHittable
 {
-    public enum State { Bones, Rise, Attack, Roar }
-    public State currentState = State.Bones;
+    public enum State { Idle, Chase }
+    public State currentState = State.Idle;
 
     public static Action<Vector3> OnSkeletonRoar;
 
     public Transform player;
-    public float detectRadius = 5f;
-    public float attackRange = 1.5f;
-    public float roarCooldown = 5f;
 
+    public float detectRadius = 6f;
+    public float moveSpeed = 2f;
+    public float losePlayerTime = 4f;
+    public float roarInterval = 6f;
+
+    float loseTimer;
     float roarTimer;
+
+    void Start()
+    {
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Character");
+            if (p != null)
+                player = p.transform;
+        }
+    }
 
     void Update()
     {
+        if (player == null) return;
+
         float dist = Vector3.Distance(transform.position, player.position);
 
         switch (currentState)
         {
-            case State.Bones:
+            case State.Idle:
                 if (dist < detectRadius)
-                    ChangeState(State.Rise);
-                break;
-
-            case State.Rise:
-                Invoke(nameof(StartAttack), 1.5f);
-                break;
-
-            case State.Attack:
-                transform.position = Vector3.MoveTowards(transform.position, player.position, 2f * Time.deltaTime);
-
-                if (dist < attackRange && roarTimer <= 0)
                 {
-                    ChangeState(State.Roar);
+                    currentState = State.Chase;
+                    loseTimer = losePlayerTime;
+                    roarTimer = 0f;
+                }
+                break;
+
+            case State.Chase:
+                transform.position = Vector3.MoveTowards(
+                    transform.position,
+                    player.position,
+                    moveSpeed * Time.deltaTime
+                );
+
+                Vector3 dir = (player.position - transform.position).normalized;
+                if (dir != Vector3.zero)
+                    transform.rotation = Quaternion.LookRotation(dir);
+
+                roarTimer += Time.deltaTime;
+                if (roarTimer >= roarInterval)
+                {
+                    OnSkeletonRoar?.Invoke(transform.position);
+                    roarTimer = 0f;
                 }
 
-                roarTimer -= Time.deltaTime;
-                break;
-
-            case State.Roar:
-                OnSkeletonRoar?.Invoke(transform.position); // 🔥 EVENT
-                roarTimer = roarCooldown;
-                ChangeState(State.Attack);
+                if (dist > detectRadius)
+                {
+                    loseTimer -= Time.deltaTime;
+                    if (loseTimer <= 0)
+                        currentState = State.Idle;
+                }
+                else
+                {
+                    loseTimer = losePlayerTime;
+                }
                 break;
         }
     }
 
-    void StartAttack()
-    {
-        ChangeState(State.Attack);
-    }
-
-    void ChangeState(State newState)
-    {
-        currentState = newState;
-    }
-
     public void Interact()
     {
-        if (currentState == State.Bones)
-            ChangeState(State.Rise);
+        currentState = State.Chase;
+    }
+
+    // 🔥 HIT = DIE
+    public void Hit(GameObject source)
+    {
+        Debug.Log("Skeleton destroyed!");
+        Destroy(gameObject);
     }
 }

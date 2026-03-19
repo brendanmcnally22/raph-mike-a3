@@ -21,6 +21,7 @@ public class Character : MonoBehaviour
     public InputActionReference attackInput;
     public InputActionReference weaponSwitchInput;
     public Shovel shovel;
+    public static System.Action OnPlayerAttack;
 
     public Rock rock;
     
