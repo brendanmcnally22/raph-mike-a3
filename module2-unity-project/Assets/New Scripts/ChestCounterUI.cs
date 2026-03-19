@@ -19,6 +19,6 @@ public class ChestCounterUI : MonoBehaviour
     void AddChest(int amount)
     {
         count++;
-       
+        text.text = "Chest Amount" + count;
     }
 }
