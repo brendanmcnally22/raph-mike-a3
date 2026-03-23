@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class LootManager : MonoBehaviour, IEventListener
 {
+
+    //only in the debug
     public int totalGold;
 
     void OnEnable() => Subscribe();

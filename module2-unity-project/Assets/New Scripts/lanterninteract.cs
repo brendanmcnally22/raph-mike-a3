@@ -1,17 +1,15 @@
 using UnityEngine;
 
-// simple interactable lantern toggle
 public class LanternInteractable : MonoBehaviour, IInteractable
 {
-    // reference to the light component
+    // light component
     public Light lanternLight;
 
-    // track state
     bool isOn = true;
 
     void Start()
     {
-        // if not assigned, try get it from children
+        // auto find light if not set
         if (lanternLight == null)
             lanternLight = GetComponentInChildren<Light>();
     }
@@ -21,10 +19,9 @@ public class LanternInteractable : MonoBehaviour, IInteractable
         // flip state
         isOn = !isOn;
 
-        // apply it
         if (lanternLight != null)
             lanternLight.enabled = isOn;
 
-        Debug.Log("lantern toggled: " + isOn);
+        Debug.Log("lantern toggled");
     }
 }

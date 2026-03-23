@@ -2,6 +2,7 @@
 
 public class GhostAI : MonoBehaviour
 {
+    // basic state machine
     public enum State
     {
         Drift,
@@ -13,14 +14,15 @@ public class GhostAI : MonoBehaviour
 
     public Transform player;
 
+    // movement tuning
     public float driftRadius = 2f;
     public float driftSpeed = 1f;
 
     public float investigateSpeed = 2f;
-    public float hauntSpeed = 3.5f;
+    public float hauntSpeed = 4f;
 
     public float hauntDuration = 5f;
-    public float investigateTime = 3f;
+    public float investigateTime = 2f;
 
     public float playerDetectRadius = 6f;
 
@@ -31,6 +33,7 @@ public class GhostAI : MonoBehaviour
 
     Renderer rend;
 
+    // cooldown so ghost doesnt melt player instantly lol
     float damageCooldown = 1f;
     float damageTimer = 0f;
 
@@ -39,6 +42,7 @@ public class GhostAI : MonoBehaviour
         startPos = transform.position;
         rend = GetComponent<Renderer>();
 
+        // auto find player if i forgot to drag it in inspector
         if (player == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Character");
@@ -49,6 +53,7 @@ public class GhostAI : MonoBehaviour
 
     void OnEnable()
     {
+        // listens for skeleton roar
         SkeletonAI.OnSkeletonRoar += ReactToRoar;
     }
 
@@ -59,6 +64,7 @@ public class GhostAI : MonoBehaviour
 
     void Update()
     {
+        // simple state machine update
         switch (currentState)
         {
             case State.Drift:
@@ -77,11 +83,13 @@ public class GhostAI : MonoBehaviour
 
     void Drift()
     {
+        // idle floating motion
         float x = Mathf.Sin(Time.time * driftSpeed) * driftRadius;
         float z = Mathf.Cos(Time.time * driftSpeed) * driftRadius;
 
         transform.position = startPos + new Vector3(x, 0, z);
 
+        // also check player so ghost isnt useless
         if (player != null)
         {
             float dist = Vector3.Distance(transform.position, player.position);
@@ -97,6 +105,7 @@ public class GhostAI : MonoBehaviour
 
     void Investigate()
     {
+        // move to last known pos
         transform.position = Vector3.MoveTowards(
             transform.position,
             investigateTarget,
@@ -115,11 +124,28 @@ public class GhostAI : MonoBehaviour
     {
         if (player == null) return;
 
+        // chase player faster
         transform.position = Vector3.MoveTowards(
             transform.position,
             player.position,
             hauntSpeed * Time.deltaTime
         );
+
+        // damage logic (distance based cause triggers were buggy)
+        damageTimer -= Time.deltaTime;
+
+        float dist = Vector3.Distance(transform.position, player.position);
+
+        if (dist < 1.5f && damageTimer <= 0f)
+        {
+            IHittable hit = player.GetComponent<IHittable>();
+
+            if (hit != null)
+            {
+                hit.Hit(gameObject);
+                damageTimer = damageCooldown;
+            }
+        }
 
         stateTimer -= Time.deltaTime;
 
@@ -131,6 +157,7 @@ public class GhostAI : MonoBehaviour
 
     void ReactToRoar(Vector3 pos)
     {
+        // ghost reacts to skeleton event
         float dist = Vector3.Distance(transform.position, pos);
 
         if (dist < 15f)
@@ -146,14 +173,15 @@ public class GhostAI : MonoBehaviour
         currentState = State.Haunt;
         stateTimer = hauntDuration;
 
+        // small visual change so player can tell
         if (rend != null)
         {
-            rend.material.EnableKeyword("_EMISSION");
             Color c = rend.material.color;
             c.a = 0.9f;
             rend.material.color = c;
         }
 
+        // trigger global event
         GraveyardEvents.OnHauntStart?.Invoke();
     }
 
@@ -163,28 +191,11 @@ public class GhostAI : MonoBehaviour
 
         if (rend != null)
         {
-            rend.material.DisableKeyword("_EMISSION");
             Color c = rend.material.color;
             c.a = 0.4f;
             rend.material.color = c;
         }
 
         GraveyardEvents.OnHauntEnd?.Invoke();
-    }
-
-    void OnTriggerStay(Collider other)
-    {
-        damageTimer -= Time.deltaTime;
-
-        if (damageTimer <= 0f)
-        {
-            IHittable hit = other.GetComponent<IHittable>();
-
-            if (hit != null)
-            {
-                hit.Hit(gameObject);
-                damageTimer = damageCooldown;
-            }
-        }
     }
 }
