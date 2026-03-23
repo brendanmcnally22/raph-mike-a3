@@ -1,8 +1,60 @@
-## GAME-10020 Project Template for Module 2
-Unity version: 2022.3.62f2
+# Graveyard Event-Driven System
 
-**Purpose:** This code repository is to be used as a code example for Assignment 2: Event-Driven Systems Implementation.
+## Overview
+This project is an event-driven gameplay system built in Unity.  
+It focuses on using events and interfaces to connect gameplay systems in a modular way.
 
-The demo below shows emergent gameplay arising from a few different systems. Fundamentally the puzzle challenge becomes one of timing, and that is not "pre-coded" anywhere in the system. The events are raised and objects in the world respond to those events with their behaviours.
+---
 
-https://github.com/user-attachments/assets/5760ec01-e171-4651-b3e8-19ed1db398e1
+## 🎥 Video Demonstration
+
+[![Watch the video](https://img.youtube.com/vi/HI_Z8_iSTCc/0.jpg)](https://www.youtube.com/watch?v=HI_Z8_iSTCc)
+
+Click the image above to watch the full gameplay demo.
+
+---
+
+## Features
+
+- Player interaction system (chests, lanterns, gravestones)
+- Skeleton AI with detection 
+- Ghost AI reacting to skeleton events
+- Event-driven environment (floating gravestones)
+- UI updates and audio feedback through events
+- Health system using interfaces
+
+---
+
+## Systems Breakdown
+
+### Interfaces
+- `IInteractable` (provided)
+- `IHittable` (custom)
+
+Used across multiple objects to keep interactions flexible.
+
+---
+
+### Events
+- `OnSkeletonRoar` → triggers ghost reactions
+- `OnChestLooted` → updates UI + plays audio
+- `OnHauntStart / OnHauntEnd` → controls environment changes
+
+Each event has multiple listeners.
+
+---
+
+### Gameplay Flow
+1. Player enters skeleton range
+2. Skeleton chases and roars
+3. Ghost reacts and investigates
+4. Ghost enters haunt state and chases player doing damage
+5. Gravestones float during haunt
+6. Player interacts with objects (chests, lanterns)
+
+---
+
+## Notes
+- System is fully event-driven
+- Components are loosely connected
+- Designed for easy expansion
