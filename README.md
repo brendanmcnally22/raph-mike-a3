@@ -1,5 +1,7 @@
 # Graveyard Event-Driven System
 
+## PROJECT IS ON DESIGN-TESTING BRANCH
+
 ## Overview
 This project is an event-driven gameplay system built in Unity.  
 It focuses on using events and interfaces to connect gameplay systems in a modular way.
