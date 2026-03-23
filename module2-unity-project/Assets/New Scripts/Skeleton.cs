@@ -82,10 +82,8 @@ public class SkeletonAI : MonoBehaviour, IInteractable, IHittable
         currentState = State.Chase;
     }
 
-    // 🔥 HIT = DIE
     public void Hit(GameObject source)
     {
-        Debug.Log("Skeleton destroyed!");
         Destroy(gameObject);
     }
 }

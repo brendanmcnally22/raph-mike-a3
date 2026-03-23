@@ -22,6 +22,8 @@ public class GhostAI : MonoBehaviour
     public float hauntDuration = 5f;
     public float investigateTime = 3f;
 
+    public float playerDetectRadius = 6f;
+
     Vector3 startPos;
     Vector3 investigateTarget;
 
@@ -29,10 +31,20 @@ public class GhostAI : MonoBehaviour
 
     Renderer rend;
 
+    float damageCooldown = 1f;
+    float damageTimer = 0f;
+
     void Start()
     {
         startPos = transform.position;
         rend = GetComponent<Renderer>();
+
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Character");
+            if (p != null)
+                player = p.transform;
+        }
     }
 
     void OnEnable()
@@ -63,17 +75,26 @@ public class GhostAI : MonoBehaviour
         }
     }
 
-    // 🌫️ DRIFT (IDLE FLOATING)
     void Drift()
     {
         float x = Mathf.Sin(Time.time * driftSpeed) * driftRadius;
         float z = Mathf.Cos(Time.time * driftSpeed) * driftRadius;
 
-        Vector3 offset = new Vector3(x, 0, z);
-        transform.position = startPos + offset;
+        transform.position = startPos + new Vector3(x, 0, z);
+
+        if (player != null)
+        {
+            float dist = Vector3.Distance(transform.position, player.position);
+
+            if (dist < playerDetectRadius)
+            {
+                investigateTarget = player.position;
+                currentState = State.Investigate;
+                stateTimer = investigateTime;
+            }
+        }
     }
 
-    // 🔍 INVESTIGATE ROAR LOCATION
     void Investigate()
     {
         transform.position = Vector3.MoveTowards(
@@ -86,12 +107,10 @@ public class GhostAI : MonoBehaviour
 
         if (stateTimer <= 0)
         {
-            Debug.Log("Ghost switching to HAUNT state");
             EnterHaunt();
         }
     }
 
-    // 👻 HAUNT PLAYER
     void Haunt()
     {
         if (player == null) return;
@@ -106,57 +125,66 @@ public class GhostAI : MonoBehaviour
 
         if (stateTimer <= 0)
         {
-            Debug.Log("Ghost returning to DRIFT");
             ExitHaunt();
         }
     }
 
-    // 🔥 EVENT RESPONSE
     void ReactToRoar(Vector3 pos)
     {
         float dist = Vector3.Distance(transform.position, pos);
 
         if (dist < 15f)
         {
-            Debug.Log("👻 Ghost ALERTED by Skeleton Roar!");
-
             investigateTarget = pos;
             currentState = State.Investigate;
             stateTimer = investigateTime;
         }
     }
 
-    // 👻 ENTER HAUNT
     void EnterHaunt()
     {
         currentState = State.Haunt;
         stateTimer = hauntDuration;
 
         if (rend != null)
+        {
             rend.material.EnableKeyword("_EMISSION");
+            Color c = rend.material.color;
+            c.a = 0.9f;
+            rend.material.color = c;
+        }
 
         GraveyardEvents.OnHauntStart?.Invoke();
     }
 
-    // 🌫️ EXIT HAUNT
     void ExitHaunt()
     {
         currentState = State.Drift;
 
         if (rend != null)
+        {
             rend.material.DisableKeyword("_EMISSION");
+            Color c = rend.material.color;
+            c.a = 0.4f;
+            rend.material.color = c;
+        }
 
         GraveyardEvents.OnHauntEnd?.Invoke();
     }
 
-    // 💥 DAMAGE PLAYER
-    void OnTriggerEnter(Collider other)
+    void OnTriggerStay(Collider other)
     {
-        IHittable hit = other.GetComponent<IHittable>();
-        if (hit != null)
+        damageTimer -= Time.deltaTime;
+
+        if (damageTimer <= 0f)
         {
-            Debug.Log("Ghost hit something!");
-            hit.Hit(gameObject);
+            IHittable hit = other.GetComponent<IHittable>();
+
+            if (hit != null)
+            {
+                hit.Hit(gameObject);
+                damageTimer = damageCooldown;
+            }
         }
     }
 }

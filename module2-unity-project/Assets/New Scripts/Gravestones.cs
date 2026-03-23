@@ -33,6 +33,7 @@ public class Gravestone : MonoBehaviour, IInteractable
 
     void StartFloating()
     {
+        startPos = transform.position;
         floating = true;
     }
 
@@ -44,6 +45,6 @@ public class Gravestone : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        Debug.Log("interacted");
+        Debug.Log("Reading gravestone...");
     }
 }

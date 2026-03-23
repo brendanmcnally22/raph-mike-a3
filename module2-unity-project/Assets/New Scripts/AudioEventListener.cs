@@ -27,7 +27,7 @@ public class AudioEventListener : MonoBehaviour, IEventListener
         audioSource.PlayOneShot(roarClip);
     }
 
-    void PlayChestSound(int goldAmount)
+    void PlayChestSound(int amount)
     {
         audioSource.PlayOneShot(chestClip);
     }
