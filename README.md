@@ -18,7 +18,7 @@ Click the image above to watch the full gameplay demo.
 
 ## Features
 
-- Player interaction system (chests, lanterns, gravestones)
+- Player interaction system (chests, lanterns) * gravestones were wip, wanted to be able to go up and read text on them but decided not to add that
 - Skeleton AI with detection 
 - Ghost AI reacting to skeleton events
 - Event-driven environment (floating gravestones)
